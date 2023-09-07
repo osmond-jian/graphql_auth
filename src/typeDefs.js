@@ -13,7 +13,8 @@ export const typeDefs = gql`
     }
 
     type Mutation{
-        createUser(email:String!, username:String!, password:String!): User!
-        deleteUser(username:String!): User!
+        createUser(email:String!, username:String!, password:String!): User
+        deleteUser(username:String!): User
+        login(email:String!, password:String!): String
     }
 `;

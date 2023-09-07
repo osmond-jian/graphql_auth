@@ -7,7 +7,6 @@ import Users from './dataSources/users';
 import { typeDefs } from './typeDefs';
 import { resolvers } from "./resolvers";
 
-
 const uri = process.env.MONGODB_URI
 const main = async() => {
     await mongoose.connect(uri, {
