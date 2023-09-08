@@ -2,6 +2,17 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 const SECRET = process.env.SECRET
 
+//get the user info from JWT 
+export const getUser = (token) => {
+    if (token){
+        try{
+            return jwt.verify(token, SECRET);
+        } catch (err) {
+            return{error:true, msg:"No token found"};
+        }
+    }
+}
+
 export const resolvers = {
     Query:{
         getUsers: async (_, _args, {dataSources:{users}}) => {
@@ -10,6 +21,9 @@ export const resolvers = {
         getUser: (_, {id}, {dataSources:{users}}) => {
             return users.getUser(id);
         }
+        // viewer: (_, args, {user}) => {
+        //     return users.find(({id})=> id === user.sub);
+        // }
     },
 
     Mutation: {
@@ -29,16 +43,11 @@ export const resolvers = {
 
         login: async (_, args, {dataSources:{users}}) => {
             const account = await users.getUser(args);
-            // const nameUser = users.getUser(args.username);
-            console.log('the args password is '+args.password+' and the datasource pw is '+account.password);
+
             if (!account) {
                 throw new Error ("No User found");
             }
-    
-            // if (!nameEmail && nameUser) {
-            //     username = nameUser;
-            // }
-            //check if password matches
+
             const isValid = await bcrypt.compare(args.password, account.password);
             if (!isValid){
                 throw new Error ("The username/email or password is incorrect.");
@@ -52,7 +61,6 @@ export const resolvers = {
                 SECRET,
                 {expiresIn:"1d"}
             );
-            console.log("You have successfully logged in!");
             return token;
         }
     }

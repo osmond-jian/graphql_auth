@@ -27,7 +27,12 @@ const dataSources = () => ({
 const server = new ApolloServer ({
     typeDefs,
     resolvers,
-    dataSources
+    dataSources,
+    //verify user identity
+    context: ({ req }) => {
+        const userValidity = req.user || null;
+        return { userValidity };
+    }
 });
 
 server.listen({port:process.env.PORT||4000}).then(({url})=>{

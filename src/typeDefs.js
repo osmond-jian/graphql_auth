@@ -1,5 +1,5 @@
 import {gql} from 'apollo-server';
-
+//can add in viewer for easier auth
 export const typeDefs = gql`
     type User {
         email:String!
@@ -10,6 +10,7 @@ export const typeDefs = gql`
     type Query {
         getUsers: [User!]!,
         getUser(id:ID!):User!
+        viewer:User!
     }
 
     type Mutation{
