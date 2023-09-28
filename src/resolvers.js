@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 const SECRET = process.env.SECRET
 
 //get the user info from JWT 
-export const getUser = (token) => {
+export default function verifyUser(token){
     if (token){
         try{
             return jwt.verify(token, SECRET);
@@ -15,11 +15,12 @@ export const getUser = (token) => {
 
 export const resolvers = {
     Query:{
-        getUsers: async (_, _args, {dataSources:{users}}) => {
-            return users.getUsers(); //sample data change later
+        getUsers: async (_, _args, contextValue) => {
+            const userList = await contextValue.dataSources.users.getUsers();
+            return userList || []; //sample data change later
         },
-        getUser: (_, {id}, {dataSources:{users}}) => {
-            return users.getUser(id);
+        getUser: (_, {id}, contextValue) => {
+            return contextValue.dataSources.users.getUser(id);
         }
         // viewer: (_, args, {user}) => {
         //     return users.find(({id})=> id === user.sub);
@@ -27,22 +28,22 @@ export const resolvers = {
     },
 
     Mutation: {
-        createUser: async (_, args, {dataSources:{users}}) => {
+        createUser: async (_, args, contextValue) => {
             const newUser = {
                 email: args.email,
                 username: args.username,
                 password: args.password
             }
             newUser.password = await bcrypt.hash(args.password, 12);
-            return users.createUser(newUser);
+            return contextValue.dataSources.users.createUser(newUser);
         },
 
-        deleteUser: async (_, args, {dataSources:{users}}) => {
-            return users.deleteUser(args);
+        deleteUser: async (_, args, contextValue) => {
+            return contextValue.dataSources.users.deleteUser(args);
         },
 
-        login: async (_, args, {dataSources:{users}}) => {
-            const account = await users.getUser(args);
+        login: async (_, args, contextValue) => {
+            const account = await contextValue.dataSources.users.getUser(args);
 
             if (!account) {
                 throw new Error ("No User found");

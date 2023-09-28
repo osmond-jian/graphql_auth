@@ -1,6 +1,12 @@
 import { MongoDataSource } from 'apollo-datasource-mongodb';
+import { User } from '../models/user.js';
 
 export default class Users extends MongoDataSource {
+    constructor(options){
+        super(options);
+        this.initialize({ cache: options.cache, context: options.token });
+    }
+
     async getUsers(){
         return await this.model.find();
     }

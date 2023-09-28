@@ -1,4 +1,4 @@
-import {gql} from 'apollo-server';
+import {gql} from 'graphql-tag';
 //can add in viewer for easier auth
 export const typeDefs = gql`
     type User {
@@ -8,7 +8,7 @@ export const typeDefs = gql`
     }
 
     type Query {
-        getUsers: [User!]!,
+        getUsers: [User!]!
         getUser(id:ID!):User!
         viewer:User!
     }

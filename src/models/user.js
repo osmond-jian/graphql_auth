@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import Mongoose from "mongoose";
 
-export const User = mongoose.model("User", {
+export const User = Mongoose.model("User", {
     email:String,
     username:String,
     password:String,
