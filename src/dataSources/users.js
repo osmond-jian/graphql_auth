@@ -1,5 +1,4 @@
 import { MongoDataSource } from 'apollo-datasource-mongodb';
-import { User } from '../models/user.js';
 
 export default class Users extends MongoDataSource {
     constructor(options){

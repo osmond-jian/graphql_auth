@@ -43,13 +43,13 @@ export const resolvers = {
         },
 
         login: async (_, args, contextValue) => {
-            const account = await contextValue.dataSources.users.getUser(args);
+            const {password, ...account} = await contextValue.dataSources.users.getUser(args);
 
             if (!account) {
                 throw new Error ("No User found");
             }
 
-            const isValid = await bcrypt.compare(args.password, account.password);
+            const isValid = await bcrypt.compare(args.password, password);
             if (!isValid){
                 throw new Error ("The username/email or password is incorrect.");
             }

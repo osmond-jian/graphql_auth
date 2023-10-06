@@ -23,13 +23,6 @@ const main = async() => {
 class ContextValue {
     constructor({req, server}){
         this.token = verifyUser(req.headers.authorization);
-        // const visitor = req.headers.authorization || null;
-        // this.token = getUser(visitor); //change to the actual token validation
-
-        // if (!visitor) {
-        //     this.token = undefined;
-        // }
-
         const { cache } = server;
         this.dataSources = {
             users: new Users(UserModel),
@@ -61,8 +54,3 @@ const startServer = async () => {
     });
     console.log(`🚀 Server ready at ${url}`);
 };
-
-
-// server.listen({port:process.env.PORT||4000}).then(({url})=>{
-//     console.log(`🚀 Server ready at ${url}`);
-// });
