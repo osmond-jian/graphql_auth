@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
+// import express from 'express';
+
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
 import { User as UserModel } from './models/user.js';
 import Users from './dataSources/users.js';
 import { typeDefs } from './typeDefs.js';
-import { resolvers } from "./resolvers.js";
-import verifyUser from './resolvers.js';
+import { resolvers, verifyUser } from "./resolvers.js";
 
 const uri = process.env.MONGODB_URI
 
@@ -21,9 +22,22 @@ const main = async() => {
 
 //contextValue class to access the entire context's value within the DataSource
 class ContextValue {
-    constructor({req, server}){
-        this.token = verifyUser(req.headers.authorization);
-        const { cache } = server;
+    constructor({ req }){
+        // const token = req.headers.authorization;
+        // console.log("Received token:", token);  // Logging the token
+
+        // const verifiedUser = token ? verifyUser(token) : null;
+        // console.log("Verified user:", verifiedUser);  // Logging the verified user
+
+        let verifiedUser = null;
+
+        if (req.headers.authorization) {
+            const token = req.headers.authorization.split(' ')[1]; // Get the token part
+            verifiedUser = verifyUser(token);
+        }
+
+        this.user = verifiedUser.user && !verifiedUser.error ? verifiedUser.user : null;
+        // const { cache } = server;  //Do we need to extract the cache property from the 'server' object?
         this.dataSources = {
             users: new Users(UserModel),
         };
@@ -36,7 +50,10 @@ main() //maybe turn to async/await after
         //Start ApolloServer
         startServer();
     })
-    .catch((error)=>console.error(error));
+    .catch((error)=>console.error(error))
+
+//call express
+// const app = express();
 
 //import and create an instance of the Apollo Server
 const server = new ApolloServer ({
@@ -44,6 +61,7 @@ const server = new ApolloServer ({
     resolvers,
 });
 
+// this code is for not using express!!!
 const startServer = async () => {
     const { url } = await startStandaloneServer (server, {
         typeDefs,
@@ -54,3 +72,19 @@ const startServer = async () => {
     });
     console.log(`🚀 Server ready at ${url}`);
 };
+
+
+// // Apollo middleware
+// app.use('/graphql', expressMiddleware(server, {
+//     // Apollo sandbox settings (if needed)
+// }));
+
+// // Start the server
+// const startExpressServer = async () => {
+//     await server.start();
+//     app.listen({ port: 4000 }, () =>
+//         console.log(`🚀 Server ready at http://localhost:4000/graphql`)
+//     );
+// };
+
+// startExpressServer();

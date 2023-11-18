@@ -1,9 +1,20 @@
 import {gql} from 'graphql-tag';
 //can add in viewer for easier auth
 export const typeDefs = gql`
+    enum UserRole {
+        ADMIN
+        USER
+        GUEST
+    }
+
     type User {
-        email:String!
-        username:String!
+        id: ID!
+        email: String!
+        username: String!
+        role: UserRole!
+        createdAt: String!
+        updatedAt: String!
+        lastLogin:String!
         password:String!
     }
 
@@ -17,5 +28,6 @@ export const typeDefs = gql`
         createUser(email:String!, username:String!, password:String!): User
         deleteUser(username:String!): User
         login(email:String!, password:String!): String
+        changePassword(email:String!, password: String!): String
     }
 `;

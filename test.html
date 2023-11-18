@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple SPA</title>
+</head>
+<body>
+    <h1>Simple SPA to Test Apollo Server</h1>
+
+    <!-- Login Form -->
+    <div>
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p id="loginStatus">Not logged in</p>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Data Fetching -->
+    <button id="fetchData">Fetch Data</button>
+    <pre id="result"></pre>
+
+    <script>
+        // Check if the user is logged in on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('authToken')) {
+                document.getElementById('loginStatus').textContent = 'Logged in';
+            }
+        });
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const loginQuery = `
+                mutation {
+                    login(email: "${email}", password: "${password}")
+                }
+            `;
+
+            fetch('http://localhost:4000/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // Use token in the request
+                },
+                body: JSON.stringify({ query: loginQuery }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.login) {
+                    localStorage.setItem('authToken', data.data.login);
+                    document.getElementById('loginStatus').textContent = 'Logged in';
+                } else {
+                    document.getElementById('loginStatus').textContent = 'Login failed';
+                }
+            })
+            .catch(error => {
+                console.error('Error during login: ', error);
+                document.getElementById('loginStatus').textContent = 'Login error';
+            });
+        });
+
+        // Fetch Data with token
+        document.getElementById('fetchData').addEventListener('click', function() {
+            const token = localStorage.getItem('authToken');
+
+            fetch('http://localhost:4000/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // Use token in the request
+                },
+                body: JSON.stringify({
+                    query: `query GetUsers { getUsers { email, username } }`
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error fetching data: ', error);
+                document.getElementById('result').textContent = 'Error fetching data';
+            });
+        });
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('authToken');
+            document.getElementById('loginStatus').textContent = 'Not logged in';
+        }
+    </script>
+</body>
+</html>
