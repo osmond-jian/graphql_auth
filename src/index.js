@@ -36,7 +36,13 @@ class ContextValue {
             verifiedUser = verifyUser(token);
         }
 
-        this.user = verifiedUser.user && !verifiedUser.error ? verifiedUser.user : null;
+        // this.user = verifiedUser.user && !verifiedUser.error ? verifiedUser.user : null;
+
+        if (verifiedUser && !verifiedUser.error) {
+            this.user = verifiedUser.user;
+        } else {
+            this.user = null; // Set explicitly to null if there's no verified user or if there's an error
+        }
         // const { cache } = server;  //Do we need to extract the cache property from the 'server' object?
         this.dataSources = {
             users: new Users(UserModel),

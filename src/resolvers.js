@@ -17,16 +17,22 @@ export function verifyUser(token){
     }
 }
 
+// Higher-order function for authorization
+function requireAdminRole(resolverFunction) {
+    return async (_, args, contextValue, info) => {
+        if (!contextValue.user || contextValue.user.role !== 'ADMIN') {
+            throw new Error(`User is NOT authorized - User.role is ${contextValue.user?.role}`);
+        }
+        return resolverFunction(_, args, contextValue, info);
+    };
+}
+
 export const resolvers = {
     Query:{
-        getUsers: async (_, _args, contextValue) => {
-            if (!contextValue.user || contextValue.user.role !== 'ADMIN') {
-                throw new Error(`User is NOT authorized - User.role is ${contextValue.user.role}`);
-                // console.log(`User is NOT authorized! Their role is ${contextValue.user.role}`); //remember to remove on deployment
-            }
+        getUsers: requireAdminRole(async (_, _args, contextValue) => {
             const userList = await contextValue.dataSources.users.getUsers();
-            return userList || []; //sample data change later
-        },
+            return userList || [];
+        }),
         getUser: (_, {id}, contextValue) => {
             return contextValue.dataSources.users.getUser(id);
         }
