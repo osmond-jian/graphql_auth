@@ -29,16 +29,27 @@ function requireAdminRole(resolverFunction) {
 
 export const resolvers = {
     Query:{
+        //get a list of ALL users on the database; requires admin role
         getUsers: requireAdminRole(async (_, _args, contextValue) => {
             const userList = await contextValue.dataSources.users.getUsers();
             return userList || [];
         }),
+        //get or check a single user based on id
         getUser: (_, {id}, contextValue) => {
             return contextValue.dataSources.users.getUser(id);
-        }
-        // viewer: (_, args, {user}) => {
-        //     return users.find(({id})=> id === user.sub);
-        // }
+        },
+
+        //neo4j queries
+        testNeo4jConnection: async (_, __, contextValue) => {
+            return contextValue.dataSources.neo4j.testConnection();
+        },
+
+        getSurvey: async (_, args, contextValue) => {
+            // args might include the surveyId
+            return contextValue.dataSources.neo4j.getSurvey(args.id);
+        },
+        
+        
     },
 
     Mutation: {
@@ -117,5 +128,34 @@ export const resolvers = {
                 throw new Error("Failed to change password");
             }
         },
+
+        //neo4j mutations
+
+        createSurvey: async (_, args, contextValue) => {
+            // args might include fields like title
+            return contextValue.dataSources.neo4j.createSurvey(args);
+        },
+
+        createQuestion: async (_, args, contextValue) => {
+            // args might include fields like text, surveyId
+            return contextValue.dataSources.neo4j.createQuestion(args);
+        },
+
+        removeQuestion: async (_, args, contextValue) => {
+            return contextValue.dataSources.neo4j.removeQuestion(args);
+        },
+        
+        createAnswer: async (_, args, contextValue) => {
+            // args might include fields like text, questionId
+            return contextValue.dataSources.neo4j.createAnswer(args);
+        },
+
+        removeAnswer: async (_, args, contextValue) => {
+            return contextValue.dataSources.neo4j.removeAnswer(args);
+        },
+        
+
+        
+        
     }
 }
