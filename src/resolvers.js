@@ -44,12 +44,14 @@ export const resolvers = {
             return contextValue.dataSources.neo4j.testConnection();
         },
 
-        getSurvey: async (_, args, contextValue) => {
-            // args might include the surveyId
-            return contextValue.dataSources.neo4j.getSurvey(args.id);
-        },
-        
-        
+        getSurvey: async (_, { id }, contextValue) => {
+            // args might include the surveyId, is it still args.id?
+            return contextValue.dataSources.neo4j.getSurvey(id);
+        }, 
+
+        // getSurveyWithAnswers: async (_, { id }, contextValue) => {
+        //     return contextValue.dataSources.neo4j.getSurveyWithAnswers(id);
+        // }
     },
 
     Mutation: {
@@ -152,10 +154,6 @@ export const resolvers = {
 
         removeAnswer: async (_, args, contextValue) => {
             return contextValue.dataSources.neo4j.removeAnswer(args);
-        },
-        
-
-        
-        
+        },   
     }
 }
