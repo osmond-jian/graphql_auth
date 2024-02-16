@@ -29,6 +29,7 @@ function requireAdminRole(resolverFunction) {
 
 export const resolvers = {
     Query:{
+        //MongoDB Queries
         //get a list of ALL users on the database; requires admin role
         getUsers: requireAdminRole(async (_, _args, contextValue) => {
             const userList = await contextValue.dataSources.users.getUsers();
@@ -40,14 +41,16 @@ export const resolvers = {
         },
 
         //neo4j queries
-        testNeo4jConnection: async (_, __, contextValue) => {
-            return contextValue.dataSources.neo4j.testConnection();
-        },
-
+        //get a single survey based on surveyId
         getSurvey: async (_, { id }, contextValue) => {
             // args might include the surveyId, is it still args.id?
             return contextValue.dataSources.neo4j.getSurvey(id);
-        }, 
+        },
+        
+        //return all survey nodes (without attached question nodes)
+        getAllSurveys: async (_, _args, contextValue) => {
+            return contextValue.dataSources.neo4j.getAllSurveys();
+        },
 
         // getSurveyWithAnswers: async (_, { id }, contextValue) => {
         //     return contextValue.dataSources.neo4j.getSurveyWithAnswers(id);
@@ -132,7 +135,6 @@ export const resolvers = {
         },
 
         //neo4j mutations
-
         createSurvey: async (_, args, contextValue) => {
             // args might include fields like title
             return contextValue.dataSources.neo4j.createSurvey(args);
@@ -141,6 +143,11 @@ export const resolvers = {
         createQuestion: async (_, args, contextValue) => {
             // args might include fields like text, surveyId
             return contextValue.dataSources.neo4j.createQuestion(args);
+        },
+
+        editQuestion: async (_, args, contextValue) => {
+            // args might include fields like text, surveyId
+            return contextValue.dataSources.neo4j.editQuestion(args);
         },
 
         removeQuestion: async (_, args, contextValue) => {

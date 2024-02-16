@@ -30,13 +30,25 @@ async function main() {
         const neo4jPassword = process.env.NEO4J_PASSWORD;
         const driver = neo4j.driver(neo4jURI, neo4j.auth.basic(neo4jUser, neo4jPassword));
 
+        // Test Neo4j connection
+        try {
+            const session = driver.session();
+            const result = await session.run('RETURN "Connection to Aura is successful" AS message');
+            const message = result.records[0].get('message');
+            console.log(message); // Should log "Connection successful"
+            session.close();
+        } catch (error) {
+            console.error('Error testing Neo4j connection:', error);
+            throw new Error('Failed to connect to Neo4j');
+        }
+
         // Create and augment schema with Neo4jGraphQL
         const neoSchema = new Neo4jGraphQL({ typeDefs, resolvers, driver });
         const schema = await neoSchema.getSchema();
 
         // Start Apollo Server
         await startServer(schema, driver);
-        console.log(`Connected to Aura`);
+        console.log(`Apollo Server started successfully`);
     } catch (error) {
         console.error('Error starting the server:', error);
     }
@@ -86,3 +98,4 @@ class ContextValue {
         };
     }
 }
+

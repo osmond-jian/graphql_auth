@@ -22,8 +22,8 @@ export const typeDefs = gql`
         getUsers: [User!]!
         getUser(id:ID!):User!
         viewer:User!
-        testNeo4jConnection: String
         getSurvey(id: ID!): Survey
+        getAllSurveys:[Survey!]!
     }
 
     type Mutation{
@@ -32,8 +32,9 @@ export const typeDefs = gql`
         login(email:String!, password:String!): String
         changePassword(email:String!, password: String!): String
 
-        createSurvey(id: ID!, title: String!): Survey
-        createQuestion(surveyId: ID!, questionId: ID!, text: String!): Question
+        createSurvey(title: String!): Survey
+        createQuestion(surveyId: ID!, text: String!, type:String!, options:[String!]): Question
+        editQuestion(surveyId: ID!, questionId: ID!, text:String!, type: String!, options:[String!]): Question
         removeQuestion(questionId: ID!): Question
         createAnswer(questionId: ID!, answerId: ID!, text: String!): Answer
         removeAnswer(answerId: ID!): Answer
@@ -42,14 +43,22 @@ export const typeDefs = gql`
     type Survey {
         id: ID!
         title: String!
+        questions: [Question!]!
         firstQuestion: Question @relationship(type: "STARTS_WITH", direction: OUT)
     }
     
     type Question {
         id: ID!
         text: String!
+        type: String!
+        options:[Option!] @relationship(type: "IS_OPTION_OF", direction: IN)
         answers: [Answer!]! @relationship(type: "HAS_ANSWER", direction: OUT)
         next: [Question!]! @relationship(type: "LEADS_TO", direction: OUT)
+    }
+
+    type Option {
+        id:ID!
+        text:String!
     }
     
     type Answer {
