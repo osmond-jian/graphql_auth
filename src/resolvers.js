@@ -52,6 +52,12 @@ export const resolvers = {
             return contextValue.dataSources.neo4j.getAllSurveys();
         },
 
+        //get all of the options of a MC question based on the questionId
+        getQuestionOptions: async (_, { id }, contextValue) => {
+            // args might include the surveyId, is it still args.id?
+            return contextValue.dataSources.neo4j.getQuestionOptions(id);
+        },
+
         // getSurveyWithAnswers: async (_, { id }, contextValue) => {
         //     return contextValue.dataSources.neo4j.getSurveyWithAnswers(id);
         // }

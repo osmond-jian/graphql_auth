@@ -24,6 +24,7 @@ export const typeDefs = gql`
         viewer:User!
         getSurvey(id: ID!): Survey
         getAllSurveys:[Survey!]!
+        getQuestionOptions(id:ID!): [Option!]!
     }
 
     type Mutation{
@@ -51,7 +52,7 @@ export const typeDefs = gql`
         id: ID!
         text: String!
         type: String!
-        options:[Option!] @relationship(type: "IS_OPTION_OF", direction: IN)
+        options:[Option!]! @relationship(type: "IS_OPTION_OF", direction: IN)
         answers: [Answer!]! @relationship(type: "HAS_ANSWER", direction: OUT)
         next: [Question!]! @relationship(type: "LEADS_TO", direction: OUT)
     }

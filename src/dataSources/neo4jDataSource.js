@@ -11,29 +11,31 @@ export default class Neo4jDataSource extends DataSource {
     }
 
 //QUERIES
-    //gets one survey with all question nodes using surveyId
+    //gets one survey with all question nodes using surveyId   
     async getSurvey(surveyId) {
         const session = this.driver.session();
         try {
+            // Start by matching the survey
             const result = await session.run(
                 `MATCH (s:Survey {id: $surveyId})
-                OPTIONAL MATCH (q:Question)-[:HAS_QUESTION]->(s)
-                WITH s, q, [(q)<-[:IS_OPTION_OF]-(o:Option) | o] AS optionNodes
-                RETURN s AS survey, collect(q) AS questions, collect(optionNodes) AS optionsPerQuestion                
-                `,
+                 // Match the first question via the FIRST_QUESTION relationship
+                 OPTIONAL MATCH (s)-[:FIRST_QUESTION]->(firstQ:Question)
+                 // Use a variable-length path to collect all questions in order, following the NEXT relationship
+                 WITH s, firstQ
+                 OPTIONAL MATCH path=(firstQ)-[:NEXT*]->(q:Question)
+                 // Return questions in the order they appear in the path
+                 WITH s, firstQ, q ORDER BY length(path)
+                 RETURN s AS survey, collect(DISTINCT firstQ) + collect(DISTINCT q) AS questions`,
                 { surveyId }
             );
     
             if (result.records.length > 0) {
                 const surveyNode = result.records[0].get('survey');
                 const survey = surveyNode.properties;
-                const questionsWithOptions = result.records[0].get('questions').map((questionNode, index) => {
-                    const question = questionNode.properties;
-                    // Directly use the options associated with this question
-                    const options = result.records[0].get('optionsPerQuestion')[index].map(optionNode => optionNode.properties);
-                    return { ...question, options };
-                });
-                return { ...survey, questions: questionsWithOptions };                  
+                const questionNodes = result.records[0].get('questions').filter(q => q != null);
+                const questions = questionNodes.flatMap(questionNode => questionNode.properties);
+                
+                return { ...survey, questions };
             } else {
                 return null; // or throw an error if survey not found
             }
@@ -43,8 +45,7 @@ export default class Neo4jDataSource extends DataSource {
         } finally {
             session.close();
         }
-    }
-    
+    }    
 
     //get an array of all surveys without question nodes
     async getAllSurveys() {
@@ -71,6 +72,37 @@ export default class Neo4jDataSource extends DataSource {
             session.close();
         }
     }
+
+    async getQuestionOptions(questionId) {
+        const session = this.driver.session();
+        try {
+            // Match the question by ID and then find all related options
+            const result = await session.run(
+                `MATCH (q:Question {id: $questionId})
+                 OPTIONAL MATCH (q)<-[:IS_OPTION_OF]-(o:Option)
+                 RETURN q AS question, collect(o) AS options`,
+                { questionId }
+            );
+    
+            let options = [];
+            if (result.records.length > 0) {
+                const questionNode = result.records[0].get('question');
+                const question = questionNode.properties;
+                // Assuming options are returned as a list of nodes
+                options = result.records[0].get('options').map(optionNode => optionNode.properties);
+    
+                return { ...question, options };
+            } else {
+                return null; // or throw an error if question not found
+            }
+        } catch (error) {
+            console.error('Error fetching question options:', error);
+            throw new Error('Error fetching question options');
+        } finally {
+            session.close();
+        }
+    }
+    
 
 //MUTATIONS
     //creates a Survey node with a generated id and a title (string)
@@ -128,9 +160,6 @@ export default class Neo4jDataSource extends DataSource {
                 `,
                 { surveyId, text, type }
             );
-            // console.log(result);
-            // console.log(result.records);
-            // console.log('Records length:', result.records.length);
             
             if (result.records.length > 0) {
                 const newQuestion = result.records[0].get('newQ').properties;
@@ -281,7 +310,6 @@ export default class Neo4jDataSource extends DataSource {
         }
     }
     
-
     async removeAnswer({ answerId }) {
         const session = this.driver.session();
         try {
