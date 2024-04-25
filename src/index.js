@@ -62,7 +62,6 @@ async function startServer(schema, driver) {
     const { url } = await startStandaloneServer(server, {
         //verify user identity
         context: async ({ req }) => new ContextValue({req,server,driver}),
-        // listen: {port:4000}, //do we need this?
     });
     console.log(`🚀 Server ready at ${url}`);
 }

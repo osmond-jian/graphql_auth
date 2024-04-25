@@ -19,10 +19,12 @@ export const typeDefs = gql`
     }
 
     type Query {
+        checkToken(token:String!): Boolean!
         getUsers: [User!]!
         getUser(id:ID!):User!
         viewer:User!
         getSurvey(id: ID!): Survey
+        getEntireSurvey(id: ID!): Survey
         getAllSurveys:[Survey!]!
         getQuestionOptions(id:ID!): [Option!]!
     }
@@ -67,5 +69,5 @@ export const typeDefs = gql`
         text: String!
         question: Question @relationship(type: "ANSWER_OF", direction: IN)
         leadsTo: Question @relationship(type: "LEADS_TO", direction: OUT)
-    } 
+    }
 `;

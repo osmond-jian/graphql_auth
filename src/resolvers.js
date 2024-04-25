@@ -29,6 +29,13 @@ function requireAdminRole(resolverFunction) {
 
 export const resolvers = {
     Query:{
+        checkToken: (_, { token }, contextValue) => {
+            const result = verifyUser(token);
+            if (!result){
+                return false;
+            }
+            return true;
+        },
         //MongoDB Queries
         //get a list of ALL users on the database; requires admin role
         getUsers: requireAdminRole(async (_, _args, contextValue) => {
@@ -46,6 +53,11 @@ export const resolvers = {
             // args might include the surveyId, is it still args.id?
             return contextValue.dataSources.neo4j.getSurvey(id);
         },
+
+        //get a single survey based on surveyId, attempt to turn into json
+        getEntireSurvey: async (_, { id }, contextValue) => {
+            return contextValue.dataSources.neo4j.getEntireSurvey(id);
+        },        
         
         //return all survey nodes (without attached question nodes)
         getAllSurveys: async (_, _args, contextValue) => {

@@ -15,26 +15,33 @@ export default class Neo4jDataSource extends DataSource {
     async getSurvey(surveyId) {
         const session = this.driver.session();
         try {
-            // Start by matching the survey
+            // Match entire survey tree with 3 depth
             const result = await session.run(
                 `MATCH (s:Survey {id: $surveyId})
-                 // Match the first question via the FIRST_QUESTION relationship
-                 OPTIONAL MATCH (s)-[:FIRST_QUESTION]->(firstQ:Question)
-                 // Use a variable-length path to collect all questions in order, following the NEXT relationship
-                 WITH s, firstQ
-                 OPTIONAL MATCH path=(firstQ)-[:NEXT*]->(q:Question)
-                 // Return questions in the order they appear in the path
-                 WITH s, firstQ, q ORDER BY length(path)
-                 RETURN s AS survey, collect(DISTINCT firstQ) + collect(DISTINCT q) AS questions`,
+                OPTIONAL MATCH (s)-[:FIRST_QUESTION]->(firstQ:Question)
+                OPTIONAL MATCH (firstQ)-[:NEXT*0..]->(q:Question)
+                OPTIONAL MATCH (q)<-[:IS_OPTION_OF]-(o:Option)
+                WITH s, firstQ, q, COLLECT(o) AS options
+                RETURN s AS survey, COLLECT(DISTINCT {question: q, options: options}) AS questions                                                   
+                `,
                 { surveyId }
             );
-    
+            
             if (result.records.length > 0) {
                 const surveyNode = result.records[0].get('survey');
                 const survey = surveyNode.properties;
-                const questionNodes = result.records[0].get('questions').filter(q => q != null);
-                const questions = questionNodes.flatMap(questionNode => questionNode.properties);
-                
+                // Assuming questions are returned as {question: Question, options: [Option]}
+                const questionWithOptions = result.records[0].get('questions').filter(q => q != null && q.question);
+            
+                const questions = questionWithOptions.map(qw => {
+                    const question = qw.question.properties;
+                    const options = qw.options.filter(opt => opt != null).map(opt => opt.properties);
+                    return {
+                        ...question,
+                        options: options
+                    };
+                });
+                console.log({...survey,questions});
                 return { ...survey, questions };
             } else {
                 return null; // or throw an error if survey not found
@@ -46,6 +53,50 @@ export default class Neo4jDataSource extends DataSource {
             session.close();
         }
     }    
+
+    //use this to test changes with the getSurvey() function
+    //maybe easier with APOC like this but cant get APOC to work currently on Aura Free : CALL apoc.path.spanningTrees(s,{labelFilter:'Survey|Question|Option', maxLevel:3}) YIELD path
+    // async getEntireSurvey(surveyId) {
+    //     const session = this.driver.session();
+    //     try {
+    //         // Match entire survey tree with 3 depth
+    //         const result = await session.run(
+    //             `MATCH (s:Survey {id: $surveyId})
+    //             OPTIONAL MATCH (s)-[:FIRST_QUESTION]->(firstQ:Question)
+    //             OPTIONAL MATCH (firstQ)-[:NEXT*0..]->(q:Question)
+    //             OPTIONAL MATCH (q)<-[:IS_OPTION_OF]-(o:Option)
+    //             WITH s, firstQ, q, COLLECT(o) AS options
+    //             RETURN s AS survey, COLLECT(DISTINCT {question: q, options: options}) AS questions                                                   
+    //             `,
+    //             { surveyId }
+    //         );
+            
+    //         if (result.records.length > 0) {
+    //             const surveyNode = result.records[0].get('survey');
+    //             const survey = surveyNode.properties;
+    //             // Assuming questions are returned as {question: Question, options: [Option]}
+    //             const questionWithOptions = result.records[0].get('questions').filter(q => q != null && q.question);
+            
+    //             const questions = questionWithOptions.map(qw => {
+    //                 const question = qw.question.properties;
+    //                 const options = qw.options.filter(opt => opt != null).map(opt => opt.properties);
+    //                 return {
+    //                     ...question,
+    //                     options: options
+    //                 };
+    //             });
+    //             console.log({...survey,questions});
+    //             return { ...survey, questions };
+    //         } else {
+    //             return null; // or throw an error if survey not found
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching survey:', error);
+    //         throw new Error('Error fetching survey');
+    //     } finally {
+    //         session.close();
+    //     }
+    // }
 
     //get an array of all surveys without question nodes
     async getAllSurveys() {
